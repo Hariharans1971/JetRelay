@@ -2,17 +2,17 @@
 
 **Real aviation data. Clear provenance. A global charter marketplace in development.**
 
-[Live website](https://aeroshare-global.perkyriver1.chatgpt.site) · [Repository](https://github.com/Hariharans1971/AeroShare) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
+[Live website on Render](https://aeroshare-global.onrender.com) · [Sites publication](https://aeroshare-global.perkyriver1.chatgpt.site) · [Repository](https://github.com/Hariharans1971/AeroShare) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
 
 ## Deployment status
 
 | Component | Status |
 | --- | --- |
-| Public website | Published on Sites / Cloudflare Workers |
+| Public website | Published on Render (Node.js, Singapore); existing Sites publication retained |
 | Airport and runway reference data | Dated, hashed snapshot; 247 country/territory codes |
 | Aircraft observations | Real provider feed; refreshes while radar is visible, subject to coverage |
 | Daily unattended reference refresh | Job prepared; not activated |
-| Render | Account connected; services and databases not provisioned |
+| Render | Web service live; 30 tests passed during build; no private database provisioned |
 | AWS | Infrastructure prepared; not deployed |
 | Booking, payments, private customer storage | Not enabled |
 
@@ -57,9 +57,9 @@ No database migrations, commercial cloud account, paid subscription or private p
 
 ## Runtime and deployment prerequisites
 
-The retained project uses TypeScript, React, Vinext/Next-compatible routes, and Cloudflare Workers. Node.js 22.13 or later and the package manager version declared in `package.json` are required. Use the existing install/build scripts and preserve the ASSETS binding. The current `start` command is a local Wrangler preview command, not a Render production server.
+The retained project uses TypeScript, React, Vinext/Next-compatible routes, and Cloudflare Workers. Node.js 22.13 or later and the package manager version declared in `package.json` are required. Use the existing install/build scripts and preserve the ASSETS binding. The root `start` command is a local Wrangler preview command. Render uses the separate `render/` Node adapter and `node dist-node/server.mjs`.
 
-For a Render migration, adapt Cloudflare module imports and asset reads, provide a production HTTP server listening on the assigned port, replace hosting identity with verified sessions, and validate deployment before enabling privileged workflows. Do not forward untrusted identity headers. See [AWS foundation](infrastructure/aws/README.md), [engineering report](docs/ENGINEERING_REPORT.md), and [repository settings](docs/GITHUB_ABOUT.md).
+The Render migration adapts Cloudflare asset reads and provides a production HTTP server listening on the assigned port. Independent verified sessions and private transactional storage must be implemented before enabling privileged workflows. Do not forward untrusted identity headers. See [AWS foundation](infrastructure/aws/README.md), [engineering report](docs/ENGINEERING_REPORT.md), and [repository settings](docs/GITHUB_ABOUT.md).
 
 ## Data and licensing
 
@@ -82,3 +82,5 @@ node dist-node/server.mjs
 The full dated public reference snapshot is preserved losslessly in `render/reference/snapshot-*.part`, with SHA-256 checks on every part. The restore command verifies and expands it into `public/data`. Source import and sharding scripts remain included. These are public reference files, not private customer storage.
 
 Render build: `npm ci --prefix render --ignore-scripts && node render/restore-reference.mjs && node render/build.mjs && node --test tests/*.test.mjs`. Start: `node dist-node/server.mjs`. Set `NODE_VERSION=24.22.1`. A free instance can suspend when idle; this is an initial public-data deployment, not a high-availability commercial service.
+
+Render service: [Dashboard](https://dashboard.render.com/web/srv-dbienkc9v7es73d9uvkg). Initial live deployment: `3e7940d889dfa9862b31048882d7b944f303989d` (31 October 2026 IST). Source uploads and initial Render migration are complete; authentication, private storage and commercial workflows remain future work.
