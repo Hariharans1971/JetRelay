@@ -1,7 +1,7 @@
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 export const publicRoot=resolve(new URL('../public/',import.meta.url).pathname);
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.geojson':'application/geo+json','.svg':'image/svg+xml','.jpg':'image/jpeg','.png':'image/png','.txt':'text/plain; charset=utf-8'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.geojson':'application/geo+json','.svg':'image/svg+xml','.jpg':'image/jpeg','.png':'image/png','.txt':'text/plain; charset=utf-8','.xml':'application/xml; charset=utf-8'};
 export async function staticAsset(request){
  let path;try{path=decodeURIComponent(new URL(request.url).pathname)}catch{return new Response('Bad path',{status:400})}
  if(path.split('/').some(segment=>segment.startsWith('.'))||path.includes('\\'))return new Response('Not found',{status:404});
