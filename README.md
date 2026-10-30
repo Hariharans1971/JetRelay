@@ -66,3 +66,19 @@ For a Render migration, adapt Cloudflare module imports and asset reads, provide
 OurAirports and Natural Earth supply public-domain reference data. Aircraft observations use adsb.lol under ODbL 1.0; NOAA AWC supplies weather observations. Preserve the source-specific notices in `public/data/aviation-data-notice.html` and bundled vendor licences. Airport time zones are geographic estimates. Manufacturer model specifications are reference information, not verified aircraft inventory.
 
 An application-code licence has not been selected. No open-source licence or commercial security certification should be inferred from this public repository.
+
+## Render runtime
+
+The `render/` adapter serves the existing interface and public aviation APIs on Node.js 24, bound to `0.0.0.0:$PORT`. Hosting identity headers are removed before routing; account access and commercial writes stay disabled until verified authentication and transactional storage are implemented.
+
+```sh
+npm ci --prefix render --ignore-scripts
+node render/restore-reference.mjs
+node render/build.mjs
+node --test tests/*.test.mjs
+node dist-node/server.mjs
+```
+
+The full dated public reference snapshot is preserved losslessly in `render/reference/snapshot-*.part`, with SHA-256 checks on every part. The restore command verifies and expands it into `public/data`. Source import and sharding scripts remain included. These are public reference files, not private customer storage.
+
+Render build: `npm ci --prefix render --ignore-scripts && node render/restore-reference.mjs && node render/build.mjs && node --test tests/*.test.mjs`. Start: `node dist-node/server.mjs`. Set `NODE_VERSION=24.22.1`. A free instance can suspend when idle; this is an initial public-data deployment, not a high-availability commercial service.

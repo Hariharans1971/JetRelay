@@ -1,0 +1,9 @@
+**
+!jobs/
+!jobs/reference-refresh/
+!jobs/reference-refresh/Dockerfile
+!jobs/reference-refresh/job.py
+!jobs/reference-refresh/requirements.txt
+!scripts/
+!scripts/import-reference.py
+!scripts/shard-reference.py

@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+process.env.NODE_ENV='test';
+const {server}=await import('../dist-node/server.mjs');
+await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const base='http://127.0.0.1:'+server.address().port;
+test.after(()=>server.close());
+test('Render serves UI, reference lookup and security headers',async()=>{const home=await fetch(base);assert.equal(home.status,200);assert.match(home.headers.get('content-security-policy'),/frame-ancestors 'none'/);const r=await fetch(base+'/api/airports?q=MAA');assert.equal(r.status,200);assert.ok((await r.json()).airports.some(x=>x.ident==='VOMM'))});
+test('forged hosting identity cannot access private workflows',async()=>{const headers={'oai-authenticated-user-id':'owner','oai-authenticated-user-email':'owner@example.com','cf-connecting-ip':'1.2.3.4'};const session=await (await fetch(base+'/api/session',{headers})).json();assert.equal(session.authenticated,false);assert.equal(session.sign_in_available,false);assert.equal((await fetch(base+'/api/admin/overview',{headers})).status,401);assert.equal((await fetch(base+'/api/enquiries',{method:'POST',headers})).status,401)});
+test('Render handles methods and malformed paths without exposing files',async()=>{assert.equal((await fetch(base+'/package.json')).status,404);assert.equal((await fetch(base+'/api/health',{method:'PATCH'})).status,405);assert.equal((await fetch(base+'/%zz')).status,400);assert.equal((await fetch(base+'/api/airports/VOMM',{method:'HEAD'})).status,200)});
