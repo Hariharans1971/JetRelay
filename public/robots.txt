@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /portal.html
+Sitemap: https://aeroshare-global.onrender.com/sitemap.xml
