@@ -8,7 +8,7 @@ A whole-aircraft empty-leg marketplace, evolved from the AeroShare aviation work
 
 This release adds an independent Node.js and PostgreSQL booking platform to the existing aviation-reference app. It does not rely on an unseen FastAPI implementation. The original Next.js/FastAPI commercial repository was not supplied, and no claim of feature parity with it is made.
 
-The public website is on Render in Singapore. The separate Render PostgreSQL pilot instance is available. Its DATABASE_URL has not been supplied to the web service, so production account and booking APIs intentionally return an unavailable status until that connection is configured. A created database is not evidence of a working application connection.
+The public website is on Render in Singapore and its managed PostgreSQL connection has been verified live. The status endpoint also checks all 13 application tables, the two unique partial booking indexes and a read-only transaction. These infrastructure diagnostics are separate from the isolated marketplace test suite and do not certify commercial readiness.
 
 ## Implemented
 
@@ -37,13 +37,17 @@ Set DATABASE_URL to a PostgreSQL connection string to enable account services. M
 
 ## Verification
 
-36 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 45 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. This is not proof of a managed Render database connection or a real Stripe sandbox transaction.
+38 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 49 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. Managed connectivity is checked independently by the live status diagnostic; the isolated suite is not a real Stripe sandbox transaction.
 
 Run the explicit integration suite after installing @electric-sql/pglite in an isolated test environment:
 
 ```sh
 NODE_ENV=test PGLITE_MODULE=/absolute/path/to/pglite/dist/index.js node tests/platform.integration.mjs
 ```
+
+## Research and operational evidence
+
+Read the [competitor and launch review](docs/COMPETITOR_AND_LAUNCH_REVIEW.md) and [dependency audit](docs/audits/dependencies-2026-10-31.json). The quality workflow runs regression, reference and isolated marketplace integration checks plus an advisory dependency audit on pushes and pull requests. Its initial GitHub execution must be verified separately.
 
 ## Activation and commercial launch
 

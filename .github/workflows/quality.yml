@@ -1,0 +1,29 @@
+name: Platform quality and dependency audit
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --prefix render --ignore-scripts
+      - run: npm audit --prefix render --omit=dev --audit-level=low
+      - run: node render/restore-reference.mjs
+      - run: node render/build.mjs
+      - run: node --test tests/*.test.mjs
+      - run: python3 -m unittest discover -s tests -p '*_test.py'
+      - run: npm install --prefix /tmp/jetrelay-ci --no-save --ignore-scripts @electric-sql/pglite@0.5.13
+      - run: node tests/platform.integration.mjs
+        env:
+          PGLITE_MODULE: /tmp/jetrelay-ci/node_modules/@electric-sql/pglite/dist/index.js
