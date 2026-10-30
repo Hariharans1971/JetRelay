@@ -1,0 +1,29 @@
+name: Daily airport reference refresh
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: reference-refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node render/restore-reference.mjs
+      - run: python3 scripts/refresh-daily-reference.py
+      - run: |
+          git config user.name 'JetRelay reference refresh'
+          git config user.email 'reference-refresh@users.noreply.github.com'
+          git add render/reference lib/data/provenance.json lib/data/countries.json lib/data/sync.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh public airport reference snapshot'
+            git push
+          fi

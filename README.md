@@ -1,75 +1,29 @@
-# AeroShare
+# JetRelay
 
-**Real aviation data. Clear provenance. A global charter marketplace in development.**
+A whole-aircraft empty-leg marketplace, evolved from the AeroShare aviation workspace.
 
-[Live website on Render](https://aeroshare-global.onrender.com) · [Sites publication](https://aeroshare-global.perkyriver1.chatgpt.site) · [Repository](https://github.com/Hariharans1971/AeroShare) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
+[Website](https://aeroshare-global.onrender.com/) · [Empty legs](https://aeroshare-global.onrender.com/booking.html) · [User guide](docs/USER_GUIDE.md)
 
-## Deployment status
+## Current release
 
-| Component | Status |
-| --- | --- |
-| Public website | Published on Render (Node.js, Singapore); existing Sites publication retained |
-| Airport and runway reference data | Dated, hashed snapshot; 247 country/territory codes |
-| Aircraft observations | Real provider feed; refreshes while radar is visible, subject to coverage |
-| Daily unattended reference refresh | Job prepared; not activated |
-| Render | Web service live; 30 tests passed during build; no private database provisioned |
-| AWS | Infrastructure prepared; not deployed |
-| Booking, payments, private customer storage | Not enabled |
+This release adds an independent Node.js and PostgreSQL booking platform to the existing aviation-reference app. It does not rely on an unseen FastAPI implementation. The original Next.js/FastAPI commercial repository was not supplied, and no claim of feature parity with it is made.
 
-Publishing code to GitHub does not deploy it or activate daily updates. The current application is not yet ready to accept commercial bookings or sensitive customer documents.
+The public website is on Render in Singapore. The separate Render PostgreSQL pilot instance is available. Its DATABASE_URL has not been supplied to the web service, so production account and booking APIs intentionally return an unavailable status until that connection is configured. A created database is not evidence of a working application connection.
 
-Global aviation reference and observation workspace with a cloud backend. The original Next.js/FastAPI/PostgreSQL repository described in the master prompt has not yet been supplied. This repository continues the previously published Sites application; it is not a verified replacement for the missing commercial system.
+## Implemented
 
-## Actual implementation
-- 86,311 OurAirports reference records and 48,386 runway records from a dated, hashed global public-domain snapshot.
-- Server-side airport/city/country/IATA/ICAO search and bounded viewport queries; no global-aircraft browser download.
-- Real Natural Earth country/coastline geometry, MapLibre GL JS 6.16.0, and a Leaflet SVG fallback when WebGL2 is unavailable. Overview-level geography, not a navigation chart.
-- Backend adsb.lol ODbL aircraft observation adapter, timestamps/freshness, coordinate validation, coalescing, cache budgets and exponential backoff.
-- Server-side NOAA AWC METAR connector with unavailable/error handling; actual external retrieval remains subject to provider access.
-- No fake listings, prices, bookings, operators or live positions. No approved inventory exists. Commercial writes fail closed.
-- Three manufacturer-sourced aircraft model references with source links and specification assumptions.
-- Cloud deployment through Sites/Cloudflare Workers; **not** the proposed private AWS/PostgreSQL enterprise architecture.
+- Separate client, operator and administrator portals, with server-enforced roles.
+- Scrypt password hashing, hashed random sessions, HttpOnly Secure SameSite cookies, CSRF and origin checks, session expiry, email verification/reset integration and mandatory admin TOTP.
+- Operator applications, aircraft review, confirmed parent charters and reverse-route empty-leg proposals.
+- Schedule and insurance validation, administrator approval and an audit trail.
+- PostgreSQL transactions, listing locks, an active-booking uniqueness constraint, idempotent whole-aircraft holds and expiry handling.
+- Stripe-hosted Checkout integration, signed webhook verification, duplicate-event handling, amount/currency validation, refund review and full-refund integration. Merchant credentials and actual Stripe sandbox/live verification are outstanding.
+- AES-256-GCM encrypted private trip-note attachments, authenticated downloads and file type/size checks. Pilot use excludes sensitive identity and medical documents.
+- Private saved route preferences. Automated matching notifications are not implemented.
+- Global airport search/details, runway references, geography and manufacturer aircraft references. NOAA AWC weather and adsb.lol radar integrations remain subject to provider availability. Radar returned HTTP 429 during production testing.
+- Daily public-reference refresh workflow at 00:00 UTC. First unattended execution is not yet verified.
 
-## Read before commercial launch
-[Full engineering report](docs/ENGINEERING_REPORT.md) contains the full prompt audit, all 25 acceptance criteria, source/licence comparison, AWS/Azure/GCP architecture/cost comparison, missing security/business workflows and phased implementation plan. The marketplace is not approved for commercial booking or enterprise resale. Original source, authorised operator inventory, identity/tenancy/transactional workflows and production controls are still required.
-
-## Source layout
-- `app/api/[...segments]/route.ts`: same-origin data APIs, constrained inputs, session/access and fail-closed write endpoints.
-- `lib/aviation.ts`: sharded airport search/details/geography and inferred time zones.
-- `lib/observations.mjs`: independent provider normalization/cache/backoff service, testable without cloud credentials.
-- `public/workspace.html`, `app.js`, `style.css`: frontend.
-- `public/radar.mjs`, `radar-fallback.mjs`: MapLibre and SVG geographic renderers.
-- `public/data`: public reference shards and licence notice only; no private data.
-- `lib/data/provenance.json`: source hashes, import date and counts.
-- `scripts/import-reference.py`, `scripts/shard-reference.py`: reproducible reference ingestion; downloads are deliberately separate from import/migration.
-
-## Verification
-```
-node --test tests/*.test.mjs
-node node_modules/typescript/bin/tsc --noEmit --pretty false
-node --check public/app.js
-node --check public/radar.mjs
-node --check public/radar-fallback.mjs
-```
-Use the Sites build helper and source workflow for build/package/publication. Local preview uses `sites-preview start` according to the Sites skill. The production ASSETS binding must be preserved in the Vite configuration.
-
-No database migrations, commercial cloud account, paid subscription or private provider credential is included. No cloud state or secret belongs in Git. Do not replace missing source observations with test fixtures in the production runtime.
-
-## Runtime and deployment prerequisites
-
-The retained project uses TypeScript, React, Vinext/Next-compatible routes, and Cloudflare Workers. Node.js 22.13 or later and the package manager version declared in `package.json` are required. Use the existing install/build scripts and preserve the ASSETS binding. The root `start` command is a local Wrangler preview command. Render uses the separate `render/` Node adapter and `node dist-node/server.mjs`.
-
-The Render migration adapts Cloudflare asset reads and provides a production HTTP server listening on the assigned port. Independent verified sessions and private transactional storage must be implemented before enabling privileged workflows. Do not forward untrusted identity headers. See [AWS foundation](infrastructure/aws/README.md), [engineering report](docs/ENGINEERING_REPORT.md), and [repository settings](docs/GITHUB_ABOUT.md).
-
-## Data and licensing
-
-OurAirports and Natural Earth supply public-domain reference data. Aircraft observations use adsb.lol under ODbL 1.0; NOAA AWC supplies weather observations. Preserve the source-specific notices in `public/data/aviation-data-notice.html` and bundled vendor licences. Airport time zones are geographic estimates. Manufacturer model specifications are reference information, not verified aircraft inventory.
-
-An application-code licence has not been selected. No open-source licence or commercial security certification should be inferred from this public repository.
-
-## Render runtime
-
-The `render/` adapter serves the existing interface and public aviation APIs on Node.js 24, bound to `0.0.0.0:$PORT`. Hosting identity headers are removed before routing; account access and commercial writes stay disabled until verified authentication and transactional storage are implemented.
+## Run
 
 ```sh
 npm ci --prefix render --ignore-scripts
@@ -79,8 +33,34 @@ node --test tests/*.test.mjs
 node dist-node/server.mjs
 ```
 
-The full dated public reference snapshot is preserved losslessly in `render/reference/snapshot-*.part`, with SHA-256 checks on every part. The restore command verifies and expands it into `public/data`. Source import and sharding scripts remain included. These are public reference files, not private customer storage.
+Set DATABASE_URL to a PostgreSQL connection string to enable account services. Migrations run at startup under a database advisory lock. Use the internal Render URL in the same region and workspace. Never commit credentials. The production server binds to 0.0.0.0:$PORT on Node.js 24.
 
-Render build: `npm ci --prefix render --ignore-scripts && node render/restore-reference.mjs && node render/build.mjs && node --test tests/*.test.mjs`. Start: `node dist-node/server.mjs`. Set `NODE_VERSION=24.22.1`. A free instance can suspend when idle; this is an initial public-data deployment, not a high-availability commercial service.
+## Verification
 
-Render service: [Dashboard](https://dashboard.render.com/web/srv-dbienkc9v7es73d9uvkg). Initial live deployment: `3e7940d889dfa9862b31048882d7b944f303989d` (31 October 2026 IST). Source uploads and initial Render migration are complete; authentication, private storage and commercial workflows remain future work.
+36 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 44 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. This is not proof of a managed Render database connection or a real Stripe sandbox transaction.
+
+Run the explicit integration suite after installing @electric-sql/pglite in an isolated test environment:
+
+```sh
+NODE_ENV=test PGLITE_MODULE=/absolute/path/to/pglite/dist/index.js node tests/platform.integration.mjs
+```
+
+## Activation and commercial launch
+
+Read [the user guide](docs/USER_GUIDE.md) for the exact connection, merchant, email, administrator and backup steps. Owner-managed credentials are required. No fake inventory, operator or paid booking is seeded in production.
+
+COMMERCIAL_LAUNCH_APPROVED must remain false until merchant onboarding, verified operator agreements, reviewed policies, production backups/restore, operational support and external security review are complete. A public deployment does not constitute aviation approval, a security certification, a payment licence or guaranteed global availability.
+
+The free pilot database expires on 29 November 2026 UTC. It must be upgraded and backed up before real customer use. Free web service sleep, provider rate limits and single-instance request limits make this a pilot rather than an enterprise availability commitment.
+
+## Source map
+
+- public/: responsive travel UI, booking and account portals, public guide and policy notice.
+- render/platform/: PostgreSQL schema, account security, transactional marketplace and payment handlers.
+- render/server.mjs: Node HTTP server and security headers.
+- app/api/[...segments]/route.ts and lib/: retained public aviation APIs and provider adapters.
+- render/reference/: SHA-256 verified compressed public snapshot parts.
+- scripts/refresh-daily-reference.py and .github/workflows/reference-refresh.yml: public-reference update pipeline.
+- infrastructure/aws/: earlier optional AWS foundation, not a deployed backend for this release.
+
+OurAirports and Natural Earth references are public domain. Aircraft observations use adsb.lol under ODbL. Preserve notices in public/data/aviation-data-notice.html. Aircraft photography is reference photography, not evidence of operator inventory. An application-code licence and final brand/trademark clearance have not been selected.

@@ -1,1 +1,1 @@
-{"name":"aeroshare-render","private":true,"type":"module","engines":{"node":">=24"},"dependencies":{"tz-lookup":"6.1.25"}}
+{"name":"aeroshare-render","private":true,"type":"module","engines":{"node":">=24"},"dependencies":{"pg":"8.23.1","stripe":"23.1.0","tz-lookup":"6.1.25"}}
