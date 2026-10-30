@@ -17,8 +17,8 @@ Reviewed 31 October 2026 IST. This document records verified capabilities and ou
 
 - Production dependency audit: zero known vulnerabilities across 16 dependencies; see [saved audit](audits/dependencies-2026-10-31.json). This is an advisory database scan, not a penetration test.
 - Node regression tests: 38 checks, including long and malformed Retry-After handling.
-- PostgreSQL WASM integration: 49 checks. New checks verify the readiness diagnostic detects a missing booking index. This is still an isolated local engine.
-- Managed database: the live status endpoint now independently checks all 13 application tables, both named booking protection indexes and a read-only transaction. A successful diagnostic is infrastructure evidence, not a real paid booking test.
+- PostgreSQL WASM integration: 51 checks. New checks verify the readiness diagnostic detects a missing booking index. This is still an isolated local engine.
+- Managed database: the live status endpoint now independently checks all 13 application tables, both named booking protection indexes and a read-only transaction. Startup additionally exercises writes, savepoint rollback and uniqueness in a temporary table which is dropped at commit, without changing customer records. A successful diagnostic is infrastructure evidence, not a real paid booking test.
 - Most recent regional live-feed sample before this review: London 114 observations, Mumbai 12; a New York request returned HTTP 429. These are samples, not current aircraft counts or worldwide availability guarantees.
 - Global reference data: 86,311 airport records, including searchable airports across continents. Reference records are not live aircraft inventory.
 
@@ -26,7 +26,7 @@ Reviewed 31 October 2026 IST. This document records verified capabilities and ou
 
 | Requirement | Acceptance evidence | Current disposition |
 | --- | --- | --- |
-| Managed application connection | Live /api/v1/status database.connected, schema_ready, booking_constraints_ready and read_only_transaction true | Verify after this deployment |
+| Managed application connection | Live /api/v1/status database.connected, schema_ready, booking_constraints_ready, read_only_transaction and transaction_write_probe true | Verify after this deployment |
 | Licensed scalable tracking | Executed agreement, API credentials, display permission, load/coverage tests, quota alarms | Owner/provider setup required |
 | Merchant onboarding | Business-approved payment account, test and live credentials, signed webhook endpoint | Credentials absent; no real sandbox transaction yet |
 | Payment end-to-end | Actual hosted checkout, verified webhook, single confirmation, cancellation and completed refund, payment reconciliation | Local webhook contracts tested; provider test outstanding |
@@ -40,6 +40,8 @@ Reviewed 31 October 2026 IST. This document records verified capabilities and ou
 | Operations | Real support channel, flight disruption handling and refund ownership | Owner staffing/setup required |
 
 Keep COMMERCIAL_LAUNCH_APPROVED=false until the acceptance evidence exists. Do not enter API secrets in GitHub files, reports or chat; configure them using the provider's secret environment settings.
+
+For an India-registered business, Stripe currently uses invite-only onboarding. Confirm merchant eligibility before choosing it; an approved alternative needs its own implemented and tested adapter. See [Stripe India onboarding](https://support.stripe.com/questions/stripe-accounts-are-invite-only-in-india). JetRelay currently implements Stripe only.
 
 ## Recommended rollout
 

@@ -8,7 +8,7 @@ A whole-aircraft empty-leg marketplace, evolved from the AeroShare aviation work
 
 This release adds an independent Node.js and PostgreSQL booking platform to the existing aviation-reference app. It does not rely on an unseen FastAPI implementation. The original Next.js/FastAPI commercial repository was not supplied, and no claim of feature parity with it is made.
 
-The public website is on Render in Singapore and its managed PostgreSQL connection has been verified live. The status endpoint also checks all 13 application tables, the two unique partial booking indexes and a read-only transaction. These infrastructure diagnostics are separate from the isolated marketplace test suite and do not certify commercial readiness.
+The public website is on Render in Singapore and its managed PostgreSQL connection has been verified live. The status endpoint also checks all 13 application tables, the two unique partial booking indexes and a read-only transaction. Startup also tests temporary-table writes, uniqueness and savepoint rollback without changing customer records. These infrastructure diagnostics are separate from the isolated marketplace test suite and do not certify commercial readiness.
 
 ## Implemented
 
@@ -37,7 +37,7 @@ Set DATABASE_URL to a PostgreSQL connection string to enable account services. M
 
 ## Verification
 
-38 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 49 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. Managed connectivity is checked independently by the live status diagnostic; the isolated suite is not a real Stripe sandbox transaction.
+38 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 51 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. Managed connectivity is checked independently by the live status diagnostic; the isolated suite is not a real Stripe sandbox transaction.
 
 Run the explicit integration suite after installing @electric-sql/pglite in an isolated test environment:
 

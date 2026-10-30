@@ -12,6 +12,7 @@ async function call(path,body,user,expected=200,extra={}){const r=await fetch(ba
 async function register(email,role='client'){await call('auth/register',{email,name:'Integration test',password:'Local-test-password-123!',role},null,201)}
 async function login(email,portal='client',code){const {d,r}=await call('auth/login',{email,password:'Local-test-password-123!',portal,code});return {...d,cookie:r.headers.get('set-cookie').split(';')[0]}}
 try{
+ assert.equal(await db.verifyDatabaseTransactions(),true);assert.equal((await db.query("SELECT to_regclass('pg_temp.jr_startup_probe') AS name")).rows[0].name,null);checks+=2;
  const readiness=await db.databaseReadiness();assert.equal(readiness.schema_ready,true);assert.equal(readiness.booking_constraints_ready,true);assert.equal(readiness.read_only_transaction,true);checks+=3;
  await pg.exec('DROP INDEX jr_one_active_parent_return');assert.equal((await db.databaseReadiness()).booking_constraints_ready,false);checks++;await pg.exec("CREATE UNIQUE INDEX jr_one_active_parent_return ON jr_listings(parent_charter_id) WHERE status IN ('pending','published')");
  await call('auth/register',{email:'bad@test.test',name:'Bad',password:'Local-test-password-123!',role:'admin'},null,403);
