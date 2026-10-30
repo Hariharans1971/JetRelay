@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 process.env.NODE_ENV='test';
+// This HTTP regression suite must never connect to a deployment/customer database.
+// Database integration runs separately with an explicit isolated test engine.
+delete process.env.DATABASE_URL;
 const {server}=await import('../dist-node/server.mjs');
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const base='http://127.0.0.1:'+server.address().port;
