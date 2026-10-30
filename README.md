@@ -37,7 +37,7 @@ Set DATABASE_URL to a PostgreSQL connection string to enable account services. M
 
 ## Verification
 
-36 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 44 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. This is not proof of a managed Render database connection or a real Stripe sandbox transaction.
+36 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 45 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. This is not proof of a managed Render database connection or a real Stripe sandbox transaction.
 
 Run the explicit integration suite after installing @electric-sql/pglite in an isolated test environment:
 
