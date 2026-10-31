@@ -12,6 +12,8 @@ The public website is on Render in Singapore. Its active database is now the sep
 
 Check [live service availability](https://aeroshare-global.onrender.com/status.html) for current account, data and activation status.
 
+Join the [public testing pilot](https://aeroshare-global.onrender.com/pilot.html). The [global pilot launch plan](docs/GLOBAL_PILOT_LAUNCH.md) includes competitor research, prepared social copy and a voluntary user-testing protocol. Human testing and marketing reach are not yet measured.
+
 ## Implemented
 
 - Separate client, operator and administrator portals, with server-enforced roles.

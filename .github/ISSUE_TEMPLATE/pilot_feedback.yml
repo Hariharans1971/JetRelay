@@ -1,0 +1,55 @@
+name: JetRelay pilot feedback
+description: Report a problem, a confusing task, or a successful public-pilot test.
+title: "[Pilot] "
+body:
+  - type: markdown
+    attributes:
+      value: "This report is public. Do not include passwords, API keys, private booking details, documents or payment information. Account security incidents should not be reported with sensitive details in a public issue."
+  - type: dropdown
+    id: result
+    attributes:
+      label: Test result
+      options:
+        - Problem encountered
+        - Confusing or missing information
+        - Task completed successfully
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area tested
+      options:
+        - Airport search and map
+        - Radar or weather
+        - Empty-leg search
+        - Client access page
+        - Operator access page
+        - Administrator access page
+        - Service status or guide
+        - Other public page
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: "Example: Android phone, Chrome"
+    validations:
+      required: true
+  - type: input
+    id: region
+    attributes:
+      label: Country or broad region if you wish
+      description: "Optional. Do not provide an exact address or location."
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps and outcome
+      description: "Which page and task did you try? What did you expect, and what happened?"
+    validations:
+      required: true
+  - type: textarea
+    id: improvement
+    attributes:
+      label: Suggested improvement
