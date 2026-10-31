@@ -18,7 +18,7 @@ export async function shutdown(){await pool?.end();pool=null}
 export function useTestDatabase(adapter){if(process.env.NODE_ENV!=='test')throw Error('Test adapter is disabled');let tail=Promise.resolve();pool={query:(...args)=>adapter.query(...args),connect:async()=>{let release;const previous=tail;tail=new Promise(r=>release=r);await previous;return {query:(...args)=>adapter.query(...args),release}},end:()=>adapter.close()};databaseStatus='CONNECTED'}
 
 // Read-only diagnostics: no customer rows, credentials or database version are exposed.
-const expectedTables=['jr_users','jr_sessions','jr_email_tokens','jr_operators','jr_aircraft','jr_charters','jr_listings','jr_bookings','jr_payments','jr_payment_events','jr_documents','jr_alerts','jr_audit'];
+const expectedTables=['jr_users','jr_sessions','jr_email_tokens','jr_operators','jr_aircraft','jr_charters','jr_listings','jr_bookings','jr_payments','jr_payment_events','jr_documents','jr_alerts','jr_audit','jr_notifications'];
 async function inspectDatabaseReadiness(){
  const checked_at=new Date().toISOString();
  if(!pool)return {connected:false,schema_ready:false,booking_constraints_ready:false,read_only_transaction:false,checked_at};

@@ -8,7 +8,7 @@ A whole-aircraft empty-leg marketplace, evolved from the AeroShare aviation work
 
 This release adds an independent Node.js and PostgreSQL booking platform to the existing aviation-reference app. It does not rely on an unseen FastAPI implementation. The original Next.js/FastAPI commercial repository was not supplied, and no claim of feature parity with it is made.
 
-The public website is on Render in Singapore. Its active database is now the separate jetrelay database in Neon Lakebase Postgres, in AWS North Virginia. The connection uses verified TLS and server-side credentials. The status endpoint also checks all 13 application tables, the two unique partial booking indexes and a read-only transaction. Startup also tests temporary-table writes, uniqueness and savepoint rollback without changing customer records. These infrastructure diagnostics are separate from the isolated marketplace test suite and do not certify commercial readiness.
+The public website is on Render in Singapore. Its active database is now the separate jetrelay database in Neon Lakebase Postgres, in AWS North Virginia. The connection uses verified TLS and server-side credentials. The status endpoint also checks all 14 application tables, the two unique partial booking indexes and a read-only transaction. Startup also tests temporary-table writes, uniqueness and savepoint rollback without changing customer records. These infrastructure diagnostics are separate from the isolated marketplace test suite and do not certify commercial readiness.
 
 Check [live service availability](https://aeroshare-global.onrender.com/status.html) for current account, data and activation status.
 
@@ -78,3 +78,5 @@ OurAirports and Natural Earth references are public domain. Aircraft observation
 Read the [31 October product research and gap audit](docs/PRODUCT_RESEARCH_2026-10-31.md) and [first paid booking checklist](docs/FIRST_PAID_BOOKING_CHECKLIST.md). Empty-leg discovery now supports passenger capacity, exact or flexible UTC dates, listing currency, earliest departure and price ordering within one currency, plus shareable search links. These features do not activate merchant collection or create real inventory.
 
 Full-refund lifecycle tracking now includes signed callbacks, provider status refresh, duplicate-request protection and client dashboard progress. See [refund operations and acceptance limits](docs/REFUND_OPERATIONS.md). Merchant credentials and real sandbox acceptance remain pending; no live collection has been enabled.
+
+Booking updates now use a durable encrypted email outbox with leases, bounded retries and private queue diagnostics. See [notification operations](docs/NOTIFICATION_OPERATIONS.md). Delivery is disabled until verified sender credentials are configured, and the free web host can sleep. See the [recovery drill and remaining Vercel routing follow-up](docs/RECOVERY_DRILL_2026-10-31.md); a complete production restore rehearsal is still outstanding.

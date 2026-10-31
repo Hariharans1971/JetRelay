@@ -38,7 +38,7 @@ Confirmed bookings allow encrypted PDF, PNG and JPEG attachments up to 32 KB. Th
 5. Propose the reverse empty leg using the parent charter reference. For a Mumbai to Delhi charter, use Delhi to Mumbai for the return. Set the full price in the currency’s minor units: INR 200,000 is 20,000,000 paise. Specify the currency and cancellation terms.
 6. Allow at least 30 minutes after the parent flight arrives. The return must depart within 72 hours. The backend rejects overlapping aircraft schedules.
 7. Wait for administrator approval. A pending proposal never appears in public results.
-8. If the original charter is cancelled, use Cancel charter. The platform withdraws linked empty legs. Unpaid holds are cancelled and affected paid bookings enter refund review. Contact affected travellers through your established operations process. Automatic customer emails are not yet implemented.
+8. If the original charter is cancelled, use Cancel charter. The platform withdraws linked empty legs. Unpaid holds are cancelled and affected paid bookings enter refund review. Contact affected travellers through your established operations process. A durable notification is recorded for affected customers; delivery needs a verified sender and an awake worker. Check [notification operations](NOTIFICATION_OPERATIONS.md) and maintain your established disruption-support process.
 
 ## Administrators
 
@@ -50,7 +50,7 @@ The dashboard shows bookings and the audit history. Full refunds require a recor
 
 ## Owner activation
 
-The Render web service is aeroshare-global in the Singapore region. The active database is the separate jetrelay database on Neon in AWS North Virginia. The old Render jetrelay-pilot database is retained as a migration fallback and is no longer active. The application is connected to the database. Live checks confirmed all 13 tables, booking protection indexes and temporary-table write and rollback tests. Use /status.html to check current availability. The following connection steps are for setup or recovery.
+The Render web service is aeroshare-global in the Singapore region. The active database is the separate jetrelay database on Neon in AWS North Virginia. The old Render jetrelay-pilot database is retained as a migration fallback and is no longer active. The application is connected to the database. Live checks confirmed all 14 tables, booking protection indexes and temporary-table write and rollback tests. Use /status.html to check current availability. The following connection steps are for setup or recovery.
 
 1. In Neon, open the JetRelay database and obtain its direct PostgreSQL connection string using verified TLS. Keep the connection string private.
 2. Open the aeroshare-global web service, then Environment. Set DATABASE_URL to that value and save with a new deployment. Do not put it in GitHub, screenshots or chat.
@@ -80,3 +80,5 @@ If the page says the database is waiting, repeat the owner connection steps. If 
 On the empty-leg search page, choose passenger count to exclude aircraft with insufficient capacity. Choose a departure date and exact, one-day or three-day flexibility on either side. Search dates use UTC; result cards show departure and arrival in both device time and UTC. Check the operator itinerary before travel.
 
 Filter by listing currency before selecting lowest price. This sorts whole-aircraft totals within that currency; it does not convert currencies. Earliest departure works across currencies. Copy search link shares the filters, not an account session or a reservation. A shared search may produce different results as availability changes. Searches show at most 100 available flights and ask you to refine filters when more exist.
+
+Booking update delivery records appear in the portal. Sent means provider acceptance, not guaranteed inbox delivery. Administrators can inspect queue counts and failed attempts. See [notification operations](NOTIFICATION_OPERATIONS.md). Database routing currently uses the original preserved Neon branch through a non-secret DATABASE_HOST override; preserve it until the Vercel association follow-up in [the recovery record](RECOVERY_DRILL_2026-10-31.md) is resolved.

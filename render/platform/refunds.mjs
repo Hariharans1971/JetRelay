@@ -1,4 +1,5 @@
 import {fail} from './security.mjs';
+import {enqueueNotification} from './notifications.mjs';
 const providerId=value=>typeof value==='string'?value:value?.id;
 
 // Called only with a provider API result, never an unverified browser payload.
@@ -24,6 +25,6 @@ export async function reconcileRefund(db,refund,actor=null){
  const full=refund.amount===Number(p.amount_minor),completed=full&&refund.status==='succeeded',status=full?refund.status:'partial_refund_review';
  await db.query('UPDATE jr_payments SET refund_id=$1,refund_status=$2,refund_amount_minor=$3,status=$4 WHERE id=$5',[refund.id,status,refund.amount,completed?'refunded':'paid',p.id]);
  await db.query('UPDATE jr_bookings SET status=$1 WHERE id=$2',[completed?'refunded':'refund_pending',p.booking_id]);
- if(p.refund_id!==refund.id||p.refund_status!==status||Number(p.refund_amount_minor)!==refund.amount)await db.query('INSERT INTO jr_audit(actor_id,action,target_id,details) VALUES($1,$2,$3,$4)',[actor,'refund.'+status,p.booking_id,JSON.stringify({refund_id:refund.id,amount_minor:refund.amount,currency:p.currency})]);
+ if(p.refund_id!==refund.id||p.refund_status!==status||Number(p.refund_amount_minor)!==refund.amount){const audit=(await db.query('INSERT INTO jr_audit(actor_id,action,target_id,details) VALUES($1,$2,$3,$4) RETURNING id::text',[actor,'refund.'+status,p.booking_id,JSON.stringify({refund_id:refund.id,amount_minor:refund.amount,currency:p.currency})])).rows[0];await enqueueNotification(db,p.booking_id,'refund:'+audit.id,'refund_update',{status})}
  return {matched:true,completed,status};
 }

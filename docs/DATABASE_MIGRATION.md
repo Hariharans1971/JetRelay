@@ -37,3 +37,7 @@ Check /status.html and /api/v1/status for provider Neon, connected/schema/bookin
 https://neon.com/pricing
 https://neon.com/docs/introduction/plans
 https://neon.com/docs/import/migrate-from-render
+
+## Subsequent routing correction — 31 October 2026
+
+The historical migration receipt remains unchanged. A later restore drill unexpectedly finalized a snapshot; the original branch was retained and restored as main/default. JetRelay now reaches the preserved original database using a hostname-only DATABASE_HOST override, with the existing secret retained inside Render. See [the incident record and outstanding Vercel-managed association](RECOVERY_DRILL_2026-10-31.md). Do not replay the historical copy command or remove the routing override as a cleanup step.

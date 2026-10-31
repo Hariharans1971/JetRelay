@@ -18,7 +18,8 @@ try{
  await source.query("INSERT INTO jr_bookings(id,user_id,listing_id,passengers,price_minor,currency,hold_until,idempotency_key) VALUES($1,$2,$3,2,9007199254740993,'INR','2027-01-01','fixture')",[b,u,l]);
  await source.query("INSERT INTO jr_documents(id,owner_id,booking_id,filename,mime,ciphertext,iv,tag) VALUES($1,$2,$3,'fixture.pdf','application/pdf',decode('00ff808100','hex'),decode('001122','hex'),decode('ffeedd','hex'))",[d,u,b]);
  await source.query("INSERT INTO jr_audit(id,actor_id,action,details) VALUES(9007199254740993,$1,'fixture','{\"nested\":{\"unicode\":\"தமிழ்\",\"value\":null}}')",[u]);
- const result=await copyApplicationDatabase(client(source),client(target),schema,'fixture');assert.equal(result.rows,9);assert.equal(result.tables,13);assert.equal(result.verified,true);
+ await source.query("INSERT INTO jr_notifications(id,event_key,user_id,booking_id,kind,details,payload_ciphertext,payload_iv,payload_tag) VALUES($1,'fixture-notification',$2,$3,'payment_update','{\"status\":\"confirmed\"}',decode('00ff808100','hex'),decode('001122','hex'),decode('ffeedd','hex'))",[randomUUID(),u,b]);
+ const result=await copyApplicationDatabase(client(source),client(target),schema,'fixture');assert.equal(result.rows,10);assert.equal(result.tables,14);assert.equal(result.verified,true);
  assert.equal((await target.query("SELECT to_char(created_at,'YYYY-MM-DD HH24:MI:SS.US') AS value FROM jr_users")).rows[0].value,'2026-10-31 10:00:00.123456');
  assert.equal((await target.query('SELECT price_minor::text AS value FROM jr_listings')).rows[0].value,'9007199254740993');
  assert.equal((await target.query("SELECT encode(ciphertext,'hex') AS value FROM jr_documents")).rows[0].value,'00ff808100');
@@ -28,5 +29,7 @@ try{
  await occupied.exec('CREATE TABLE unrelated(id integer)');await assert.rejects(copyApplicationDatabase(client(source),client(occupied),schema,'fixture'),/must be empty/);
  await assert.rejects(copyApplicationDatabase(client(source),client(broken),schema.replace(/^CREATE TABLE IF NOT EXISTS jr_documents.*$/m,''),'fixture'));
  assert.equal((await broken.query("SELECT count(*)::integer AS count FROM information_schema.tables WHERE table_schema='public'")).rows[0].count,0);
- console.log(JSON.stringify({migration_checks:11,result:'PASS',scope:'Isolated PostgreSQL WASM; exact values, idempotent retry, occupied target refusal and atomic rollback'}));
+ assert.equal((await target.query("SELECT encode(payload_ciphertext,'hex') AS value FROM jr_notifications")).rows[0].value,'00ff808100');
+ assert.equal((await target.query("SELECT details->>'status' AS value FROM jr_notifications")).rows[0].value,'confirmed');
+ console.log(JSON.stringify({migration_checks:13,result:'PASS',scope:'Isolated PostgreSQL WASM; exact values, idempotent retry, occupied target refusal and atomic rollback'}));
 }finally{for(const db of [source,target,occupied,broken])await db.close()}

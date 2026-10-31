@@ -1,6 +1,6 @@
 import pg from 'pg';
 import {readFile} from 'node:fs/promises';
-export const migrationTables=['jr_users','jr_sessions','jr_email_tokens','jr_operators','jr_aircraft','jr_charters','jr_listings','jr_bookings','jr_payments','jr_payment_events','jr_documents','jr_alerts','jr_audit'];
+export const migrationTables=['jr_users','jr_sessions','jr_email_tokens','jr_operators','jr_aircraft','jr_charters','jr_listings','jr_bookings','jr_payments','jr_payment_events','jr_documents','jr_alerts','jr_audit','jr_notifications'];
 const fingerprint=table=>`SELECT count(*)::text AS count,md5(COALESCE(string_agg(md5(to_jsonb(t)::text),'' ORDER BY md5(to_jsonb(t)::text)),'')) AS checksum FROM public.${table} t`;
 // Explicit, one-time, server-side migration. No credentials or customer rows enter logs.
 // Both connections are supplied by the caller; no public HTTP migration endpoint exists.
