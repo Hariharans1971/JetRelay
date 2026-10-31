@@ -8,7 +8,7 @@ export async function staticAsset(request){
  const file=resolve(publicRoot,'.'+path);
  if(!file.startsWith(publicRoot+sep))return new Response('Not found',{status:404});
  try{if(!(await stat(file)).isFile())return new Response('Not found',{status:404});
- const ext=file.slice(file.lastIndexOf('.'));return new Response(request.method==='HEAD'?null:await readFile(file),{headers:{'Content-Type':mime[ext]||'application/octet-stream','Cache-Control':'public, max-age=3600'}})
+ const ext=file.slice(file.lastIndexOf('.'));return new Response(request.method==='HEAD'?null:await readFile(file),{headers:{'Content-Type':mime[ext]||'application/octet-stream','Cache-Control':['.html','.js','.mjs','.css'].includes(ext)?'no-cache':'public, max-age=3600'}})
  }catch{return new Response('Not found',{status:404})}
 }
 // Hosting-specific identity is deliberately not accepted on this runtime.

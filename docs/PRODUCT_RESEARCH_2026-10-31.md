@@ -32,6 +32,8 @@ No competitor inventory, images, branding, private data or authenticated content
 - Protection against an older flight-search response replacing newer results; airport-input changes invalidate pending responses and stale selections.
 - A temporary-search-failure message that preserves the search rather than claiming setup is incomplete for every error.
 
+Live browser QA exposed an old-script/new-page mismatch caused by one-hour caching of mutable assets. HTML, JavaScript and CSS now require cache revalidation, and this search release uses versioned script/style URLs to bypass already-cached assets.
+
 No schema migration, production seed inventory or new customer records were required.
 
 ## Code and operational gap audit
@@ -59,7 +61,7 @@ The application's frontend/backend/database connection is necessary infrastructu
 
 ## Validation of this change
 
-- Node regression suite: 45 passing tests, including stale airport/search response protection and query guards.
+- Node regression suite: 46 passing tests, including stale airport/search response protection and query guards.
 - Isolated PostgreSQL WASM PGlite: 67 integration request/diagnostic checks passed, including filtered inventory, capacity exclusions, bounded flexibility, price ordering and UTC date behaviour with a non-UTC database session.
 - Tests use controlled fixtures and local signed payment events. They do not create real flights, customers, purchases or payouts and do not replace provider sandbox acceptance.
 - GitHub checks and live deployment verification must be confirmed after this commit; see the repository's checks and Render deployment history for current evidence.
