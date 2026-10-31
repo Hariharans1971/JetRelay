@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import {randomUUID} from 'node:crypto';
+import {copyApplicationDatabase} from '../render/platform/migrate.mjs';
+const {PGlite}=await import(pathToFileURL(process.env.PGLITE_MODULE).href);
+const schema=await readFile(new URL('../render/platform/schema.sql',import.meta.url),'utf8');
+const source=new PGlite(),target=new PGlite(),occupied=new PGlite(),broken=new PGlite();
+const client=db=>({query:(sql,args)=>sql.includes('CREATE TABLE IF NOT EXISTS jr_users')?db.exec(sql):db.query(sql,args)});
+try{
+ await source.exec(schema);const [u,o,a,c,l,b,d]=Array.from({length:7},()=>randomUUID());
+ await source.query("INSERT INTO jr_users(id,email,name,password_hash,role,created_at) VALUES($1,'test@example.invalid','Tamil தமிழ் and quotes < >','fixture-only','operator','2026-10-31 10:00:00.123456+00')",[u]);
+ await source.query("INSERT INTO jr_sessions VALUES('fixture-token',$1,'fixture-csrf','2027-01-01')",[u]);
+ await source.query("INSERT INTO jr_operators(id,user_id,company,licence,country) VALUES($1,$2,'Fixture only','FIXTURE','IN')",[o,u]);
+ await source.query("INSERT INTO jr_aircraft(id,operator_id,registration,model,seats,insurance_expires) VALUES($1,$2,'FIXTURE','Fixture',4,'2027-12-31')",[a,o]);
+ await source.query("INSERT INTO jr_charters(id,operator_id,aircraft_id,origin,destination,departure,arrival,reference) VALUES($1,$2,$3,'VABB','VIDP','2027-01-01 01:00Z','2027-01-01 03:00Z','Fixture')",[c,o,a]);
+ await source.query("INSERT INTO jr_listings(id,operator_id,aircraft_id,parent_charter_id,origin,destination,departure,arrival,price_minor,currency,cancellation_terms) VALUES($1,$2,$3,$4,'VIDP','VABB','2027-01-01 04:00Z','2027-01-01 06:00Z',9007199254740993,'INR','Fixture terms')",[l,o,a,c]);
+ await source.query("INSERT INTO jr_bookings(id,user_id,listing_id,passengers,price_minor,currency,hold_until,idempotency_key) VALUES($1,$2,$3,2,9007199254740993,'INR','2027-01-01','fixture')",[b,u,l]);
+ await source.query("INSERT INTO jr_documents(id,owner_id,booking_id,filename,mime,ciphertext,iv,tag) VALUES($1,$2,$3,'fixture.pdf','application/pdf',decode('00ff808100','hex'),decode('001122','hex'),decode('ffeedd','hex'))",[d,u,b]);
+ await source.query("INSERT INTO jr_audit(id,actor_id,action,details) VALUES(9007199254740993,$1,'fixture','{\"nested\":{\"unicode\":\"தமிழ்\",\"value\":null}}')",[u]);
+ const result=await copyApplicationDatabase(client(source),client(target),schema,'fixture');assert.equal(result.rows,9);assert.equal(result.tables,13);assert.equal(result.verified,true);
+ assert.equal((await target.query("SELECT to_char(created_at,'YYYY-MM-DD HH24:MI:SS.US') AS value FROM jr_users")).rows[0].value,'2026-10-31 10:00:00.123456');
+ assert.equal((await target.query('SELECT price_minor::text AS value FROM jr_listings')).rows[0].value,'9007199254740993');
+ assert.equal((await target.query("SELECT encode(ciphertext,'hex') AS value FROM jr_documents")).rows[0].value,'00ff808100');
+ assert.equal((await target.query("SELECT nextval('jr_audit_id_seq')::text AS value")).rows[0].value,'9007199254740994');
+ assert.equal((await copyApplicationDatabase(client(source),client(target),schema,'fixture')).reused,true);
+ await target.query("UPDATE jr_users SET name='changed fixture'");await assert.rejects(copyApplicationDatabase(client(source),client(target),schema,'fixture'),/no longer matches/);
+ await occupied.exec('CREATE TABLE unrelated(id integer)');await assert.rejects(copyApplicationDatabase(client(source),client(occupied),schema,'fixture'),/must be empty/);
+ await assert.rejects(copyApplicationDatabase(client(source),client(broken),schema.replace(/^CREATE TABLE IF NOT EXISTS jr_documents.*$/m,''),'fixture'));
+ assert.equal((await broken.query("SELECT count(*)::integer AS count FROM information_schema.tables WHERE table_schema='public'")).rows[0].count,0);
+ console.log(JSON.stringify({migration_checks:11,result:'PASS',scope:'Isolated PostgreSQL WASM; exact values, idempotent retry, occupied target refusal and atomic rollback'}));
+}finally{for(const db of [source,target,occupied,broken])await db.close()}

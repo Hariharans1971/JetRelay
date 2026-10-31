@@ -6,7 +6,9 @@ import { GET, POST, DELETE } from './route.mjs';
 import {handlePlatform,origin} from '../render/platform/api.mjs';
 import {readFile} from 'node:fs/promises';
 import {initializeDatabase,shutdown,ping,databaseStatus} from '../render/platform/database.mjs';
+import {runConfiguredMigration} from '../render/platform/migrate.mjs';
 await initializeDatabase();
+if(process.env.NODE_ENV!=='test')await runConfiguredMigration();
 const security={'Strict-Transport-Security':'max-age=31536000','Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Resource-Policy':'same-origin','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','X-Frame-Options':'DENY','Permissions-Policy':'camera=(), microphone=(), geolocation=()','Content-Security-Policy':"default-src 'self'; script-src 'self' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"};
 export const server=createServer(async(req,res)=>{
  try{
@@ -23,7 +25,7 @@ export const server=createServer(async(req,res)=>{
  if(['/','/workspace'].includes(url.pathname))url.pathname='/workspace.html';
  response=await staticAsset(new Request(url,{method:req.method}));
  }else response=new Response('Method not allowed',{status:405});
- if(url.pathname==='/api/health'&&response.ok){const health=await response.json();const connected=await ping();health.service='JetRelay';health.database={configured:!!process.env.DATABASE_URL,connected,status:process.env.DATABASE_URL?databaseStatus:'NOT_PROVISIONED',private_storage_enabled:connected&&!!process.env.DOCUMENT_ENCRYPTION_KEY};health.marketplace={...health.marketplace,booking_enabled:connected,authenticated_writes_enabled:connected,payment_configured:!!(process.env.STRIPE_SECRET_KEY&&process.env.STRIPE_WEBHOOK_SECRET),commercial_enabled:process.env.COMMERCIAL_LAUNCH_APPROVED==='true'};health.reference_refresh=JSON.parse(await readFile(new URL('../lib/data/sync.json',import.meta.url),'utf8'));response=Response.json(health,{headers:{'Cache-Control':'no-store'}})}
+ if(url.pathname==='/api/health'&&response.ok){const health=await response.json();const connected=await ping();health.service='JetRelay';health.database={configured:!!process.env.DATABASE_URL,connected,status:process.env.DATABASE_URL?databaseStatus:'NOT_PROVISIONED',private_storage_enabled:connected&&!!process.env.DOCUMENT_ENCRYPTION_KEY};health.marketplace={...health.marketplace,booking_enabled:connected,authenticated_writes_enabled:connected&&process.env.DATABASE_WRITE_MAINTENANCE!=='true',payment_configured:!!(process.env.STRIPE_SECRET_KEY&&process.env.STRIPE_WEBHOOK_SECRET),commercial_enabled:process.env.COMMERCIAL_LAUNCH_APPROVED==='true'};health.reference_refresh=JSON.parse(await readFile(new URL('../lib/data/sync.json',import.meta.url),'utf8'));response=Response.json(health,{headers:{'Cache-Control':'no-store'}})}
  res.writeHead(response.status,{...security,...Object.fromEntries(response.headers)});
  if(req.method==='HEAD'||!response.body)res.end();else await pipeline(Readable.fromWeb(response.body),res);
  }catch{if(!res.headersSent)res.writeHead(500,security);res.end('Service unavailable')}

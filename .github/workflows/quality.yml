@@ -27,3 +27,6 @@ jobs:
       - run: node tests/platform.integration.mjs
         env:
           PGLITE_MODULE: /tmp/jetrelay-ci/node_modules/@electric-sql/pglite/dist/index.js
+      - run: node tests/migration.integration.mjs
+        env:
+          PGLITE_MODULE: /tmp/jetrelay-ci/node_modules/@electric-sql/pglite/dist/index.js
