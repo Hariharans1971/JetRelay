@@ -15,6 +15,7 @@ try{
  assert.equal(await db.verifyDatabaseTransactions(),true);assert.equal((await db.query("SELECT to_regclass('pg_temp.jr_startup_probe') AS name")).rows[0].name,null);checks+=2;
  const readiness=await db.databaseReadiness();assert.equal(readiness.schema_ready,true);assert.equal(readiness.booking_constraints_ready,true);assert.equal(readiness.read_only_transaction,true);checks+=3;
  await pg.exec('DROP INDEX jr_one_active_parent_return');assert.equal((await db.databaseReadiness()).booking_constraints_ready,false);checks++;await pg.exec("CREATE UNIQUE INDEX jr_one_active_parent_return ON jr_listings(parent_charter_id) WHERE status IN ('pending','published')");
+ await call('listings?date=2026-99-99',null,null,400);await call('listings?date=2026-02-30',null,null,400);
  await call('auth/register',{email:'bad@test.test',name:'Bad',password:'Local-test-password-123!',role:'admin'},null,403);
  const secret='JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';await call('auth/bootstrap',{token:process.env.ADMIN_BOOTSTRAP_TOKEN,email:'admin@jetrelay.test',name:'Owner test',password:'Local-test-password-123!',totp_secret:secret,code:totp(secret)},null,201);
  await call('auth/login',{email:'admin@jetrelay.test',password:'Local-test-password-123!',portal:'admin'},null,401);const admin=await login('admin@jetrelay.test','admin',totp(secret));

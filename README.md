@@ -10,6 +10,8 @@ This release adds an independent Node.js and PostgreSQL booking platform to the 
 
 The public website is on Render in Singapore and its managed PostgreSQL connection has been verified live. The status endpoint also checks all 13 application tables, the two unique partial booking indexes and a read-only transaction. Startup also tests temporary-table writes, uniqueness and savepoint rollback without changing customer records. These infrastructure diagnostics are separate from the isolated marketplace test suite and do not certify commercial readiness.
 
+Check [live service availability](https://aeroshare-global.onrender.com/status.html) for current account, data and activation status.
+
 ## Implemented
 
 - Separate client, operator and administrator portals, with server-enforced roles.
@@ -21,7 +23,7 @@ The public website is on Render in Singapore and its managed PostgreSQL connecti
 - AES-256-GCM encrypted private trip-note attachments, authenticated downloads and file type/size checks. Pilot use excludes sensitive identity and medical documents.
 - Private saved route preferences. Automated matching notifications are not implemented.
 - Global airport search/details, runway references, geography and manufacturer aircraft references. NOAA AWC weather and adsb.lol radar integrations remain subject to provider availability. Radar returned HTTP 429 during production testing.
-- Daily public-reference refresh workflow at 00:00 UTC. First unattended execution is not yet verified.
+- Daily public-reference refresh workflow at 00:00 UTC. The scheduled run on 31 October 2026 succeeded and automatically deployed the refreshed snapshot.
 
 ## Run
 
@@ -37,7 +39,7 @@ Set DATABASE_URL to a PostgreSQL connection string to enable account services. M
 
 ## Verification
 
-38 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 51 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. Managed connectivity is checked independently by the live status diagnostic; the isolated suite is not a real Stripe sandbox transaction.
+38 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 53 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. Managed connectivity is checked independently by the live status diagnostic; the isolated suite is not a real Stripe sandbox transaction.
 
 Run the explicit integration suite after installing @electric-sql/pglite in an isolated test environment:
 

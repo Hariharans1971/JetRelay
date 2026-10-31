@@ -10,6 +10,7 @@ Client sign-in: /portal.html?role=client
 Operator sign-in: /portal.html?role=operator
 Administrator sign-in: /portal.html?role=admin
 Help: /guide.html
+Live service status: /status.html
 
 A different login page does not grant a different role. The backend checks the account role on every privileged operation. Public registration creates only a client or operator account. Administrators require the owner’s setup token and an authenticator code.
 
@@ -49,7 +50,7 @@ The dashboard shows bookings and the audit history. Full refunds require a recor
 
 ## Owner activation
 
-The Render web service is aeroshare-global in the Singapore region. The separate database is jetrelay-pilot, also in Singapore. The database is available but its application connection must be supplied securely by the owner.
+The Render web service is aeroshare-global in the Singapore region. The separate database is jetrelay-pilot, also in Singapore. The application is connected to the database. Live checks confirmed all 13 tables, booking protection indexes and temporary-table write and rollback tests. Use /status.html to check current availability. The following connection steps are for setup or recovery.
 
 1. In Render, open the jetrelay-pilot database and copy its Internal Database URL.
 2. Open the aeroshare-global web service, then Environment. Set DATABASE_URL to that value and save with a new deployment. Do not put it in GitHub, screenshots or chat.
@@ -70,6 +71,6 @@ Radar uses adsb.lol aircraft observations. During testing the Render server rece
 
 Weather uses NOAA Aviation Weather Center. A live VOMM METAR was retrieved during testing. Reports have observation times and may be absent or delayed. The display is informational and is not a dispatch or flight-safety decision tool.
 
-A daily OurAirports refresh workflow is configured in GitHub Actions for 00:00 UTC, which is 05:30 IST. Its first unattended execution still requires verification. Failed downloads must leave the committed snapshot unchanged. GitHub Actions can delay schedules or require the repository owner to enable workflows.
+A daily OurAirports refresh workflow is configured in GitHub Actions for 00:00 UTC, which is 05:30 IST. The scheduled GitHub Actions run completed successfully on 31 October 2026, refreshed the snapshot at 09:40 IST and automatically deployed it to Render. Failed downloads must leave the committed snapshot unchanged. GitHub Actions can delay schedules or require the repository owner to enable workflows.
 
 If the page says the database is waiting, repeat the owner connection steps. If checkout is unavailable, merchant credentials are missing or the launch gate is closed. If a hold expires, search again rather than reuse an old checkout. If the aircraft disappears after a parent charter cancellation, the operator must resolve availability and refund obligations before any travel.
