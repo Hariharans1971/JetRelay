@@ -72,3 +72,7 @@ The active Neon Free database has no fixed trial expiry under the current plan. 
 - infrastructure/aws/: earlier optional AWS foundation, not a deployed backend for this release.
 
 OurAirports and Natural Earth references are public domain. Aircraft observations use adsb.lol under ODbL. Preserve notices in public/data/aviation-data-notice.html. Aircraft photography is reference photography, not evidence of operator inventory. An application-code licence and final brand/trademark clearance have not been selected.
+
+## Global product review and flight discovery
+
+Read the [31 October product research and gap audit](docs/PRODUCT_RESEARCH_2026-10-31.md) and [first paid booking checklist](docs/FIRST_PAID_BOOKING_CHECKLIST.md). Empty-leg discovery now supports passenger capacity, exact or flexible UTC dates, listing currency, earliest departure and price ordering within one currency, plus shareable search links. These features do not activate merchant collection or create real inventory.

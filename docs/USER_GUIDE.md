@@ -74,3 +74,9 @@ Weather uses NOAA Aviation Weather Center. A live VOMM METAR was retrieved durin
 A daily OurAirports refresh workflow is configured in GitHub Actions for 00:00 UTC, which is 05:30 IST. The scheduled GitHub Actions run completed successfully on 31 October 2026, refreshed the snapshot at 09:40 IST and automatically deployed it to Render. Failed downloads must leave the committed snapshot unchanged. GitHub Actions can delay schedules or require the repository owner to enable workflows.
 
 If the page says the database is waiting, repeat the owner connection steps. If checkout is unavailable, merchant credentials are missing or the launch gate is closed. If a hold expires, search again rather than reuse an old checkout. If the aircraft disappears after a parent charter cancellation, the operator must resolve availability and refund obligations before any travel.
+
+## Flexible flight discovery
+
+On the empty-leg search page, choose passenger count to exclude aircraft with insufficient capacity. Choose a departure date and exact, one-day or three-day flexibility on either side. Search dates use UTC; result cards show departure and arrival in both device time and UTC. Check the operator itinerary before travel.
+
+Filter by listing currency before selecting lowest price. This sorts whole-aircraft totals within that currency; it does not convert currencies. Earliest departure works across currencies. Copy search link shares the filters, not an account session or a reservation. A shared search may produce different results as availability changes. Searches show at most 100 available flights and ask you to refine filters when more exist.

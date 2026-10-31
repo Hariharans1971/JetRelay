@@ -28,6 +28,27 @@ try{
  const {d:c}=await call('operator/charters',charter,op,201);await call('operator/charters',charter,other,403);await call('operator/charters',charter,op,409);
  const leg={parent_charter_id:c.id,origin:'VIDP',destination:'VABB',departure:iso(start+3*hour),arrival:iso(start+5*hour),price_minor:20000000,currency:'INR',cancellation_terms:'Local test terms. Full refund if operator cancels.'};await call('operator/empty-legs',{...leg,origin:'VABB',destination:'VIDP'},op,400);const {d:l}=await call('operator/empty-legs',leg,op,201);await call('operator/empty-legs',leg,op,409);
  assert.equal((await call('listings')).d.total,0);await call('admin/review',{type:'listing',id:l.id,decision:'approve',note:'Local test parent charter checked'},admin);assert.equal((await call('listings')).d.total,1);
+ // Exercise real SQL filtering against isolated inventory, never production records.
+ assert.equal((await call('listings?passengers=7')).d.total,0);
+ assert.equal((await call('listings?passengers=6&currency=INR&sort=price')).d.total,1);
+ assert.equal((await call('listings?currency=USD')).d.total,0);
+ await call('listings?passengers=2.5',null,null,400);await call('listings?sort=price',null,null,400);
+ await call('listings?flex=3',null,null,400);await call('listings?sort=bad',null,null,400);
+ const departureDay=leg.departure.slice(0,10),nextDay=iso(start+3*hour+24*hour).slice(0,10);
+ assert.equal((await call('listings?date='+nextDay)).d.total,0);
+ assert.equal((await call('listings?date='+nextDay+'&flex=1')).d.total,1);
+ assert.equal((await call('listings?date='+departureDay+'&passengers=6')).d.date_basis,'UTC');
+ const secondParent=randomUUID(),secondListing=randomUUID();
+ await db.query("INSERT INTO jr_charters(id,operator_id,aircraft_id,origin,destination,departure,arrival,reference) SELECT $1,operator_id,aircraft_id,origin,destination,departure+interval '2 days',arrival+interval '2 days','SECOND-TEST-PARENT' FROM jr_charters WHERE id=$2",[secondParent,c.id]);
+ await db.query("INSERT INTO jr_listings(id,operator_id,aircraft_id,parent_charter_id,origin,destination,departure,arrival,price_minor,currency,cancellation_terms,status) SELECT $1,operator_id,aircraft_id,$2,origin,destination,departure+interval '2 days',arrival+interval '2 days',price_minor-100,'INR',cancellation_terms,'published' FROM jr_listings WHERE id=$3",[secondListing,secondParent,l.id]);
+ assert.deepEqual((await call('listings?currency=INR&sort=price')).d.listings.map(x=>x.id),[secondListing,l.id]);
+ assert.deepEqual((await call('listings?sort=departure')).d.listings.map(x=>x.id),[l.id,secondListing]);
+ assert.equal((await call('listings?date='+departureDay+'&flex=3')).d.total,2);
+ // Explicit UTC semantics must hold even if the database session has a different timezone.
+ await pg.exec("SET TIME ZONE 'Pacific/Honolulu'");
+ assert.equal((await call('listings?date='+departureDay)).d.total,1);
+ await pg.exec("SET TIME ZONE 'UTC'");
+ await db.query('DELETE FROM jr_listings WHERE id=$1',[secondListing]);await db.query('DELETE FROM jr_charters WHERE id=$1',[secondParent]);
  const booking={listing_id:l.id,passengers:2,idempotency_key:randomUUID(),accepted_terms:true};await call('bookings',booking,one,403);await db.query('UPDATE jr_users SET email_verified=true WHERE role=\'client\'');await call('bookings',{...booking,accepted_terms:false},one,400);await call('bookings',booking,one,403,{Origin:'https://evil.example'});
  const results=await Promise.all([call('bookings',booking,one,201),call('bookings',{...booking,idempotency_key:randomUUID()},two,409)]);const held=results[0].d.booking;assert.equal((await call('bookings',booking,one,201)).d.booking.id,held.id);
  await call('documents',{booking_id:held.id,filename:'note.pdf',mime:'application/pdf',content_base64:Buffer.from('%PDF-1.4 local test').toString('base64')},one,403);
