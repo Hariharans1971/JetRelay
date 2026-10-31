@@ -14,3 +14,11 @@ CREATE TABLE IF NOT EXISTS jr_payment_events(event_id text PRIMARY KEY,received_
 CREATE TABLE IF NOT EXISTS jr_documents(id uuid PRIMARY KEY,owner_id uuid NOT NULL REFERENCES jr_users(id),booking_id uuid NOT NULL REFERENCES jr_bookings(id),filename text NOT NULL,mime text NOT NULL,ciphertext bytea NOT NULL,iv bytea NOT NULL,tag bytea NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS jr_alerts(id uuid PRIMARY KEY,user_id uuid NOT NULL REFERENCES jr_users(id),origin text NOT NULL,destination text NOT NULL,travel_date date NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),UNIQUE(user_id,origin,destination,travel_date));
 CREATE TABLE IF NOT EXISTS jr_audit(id bigserial PRIMARY KEY,actor_id uuid REFERENCES jr_users(id),action text NOT NULL,target_id uuid,details jsonb NOT NULL DEFAULT '{}',created_at timestamptz NOT NULL DEFAULT now());
+
+-- Additive, repeatable upgrade: existing payment records and ciphertext stay intact.
+ALTER TABLE jr_payments ADD COLUMN IF NOT EXISTS payment_intent_id text;
+ALTER TABLE jr_payments ADD COLUMN IF NOT EXISTS refund_id text;
+ALTER TABLE jr_payments ADD COLUMN IF NOT EXISTS refund_status text;
+ALTER TABLE jr_payments ADD COLUMN IF NOT EXISTS refund_amount_minor bigint;
+CREATE UNIQUE INDEX IF NOT EXISTS jr_payment_intent_unique ON jr_payments(payment_intent_id) WHERE payment_intent_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS jr_refund_unique ON jr_payments(refund_id) WHERE refund_id IS NOT NULL;

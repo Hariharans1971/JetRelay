@@ -18,12 +18,14 @@ async function inspectDatabaseReadiness(){
   await db.query('SET TRANSACTION READ ONLY');
   const tables=(await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema=current_schema() AND table_name=ANY($1::text[])",[expectedTables])).rows;
   const indexes=(await db.query("SELECT indexname,indexdef FROM pg_indexes WHERE schemaname=current_schema() AND indexname=ANY($1::text[])",[['jr_one_active_parent_return','jr_one_whole_aircraft_booking']])).rows;
+  const refundColumns=(await db.query("SELECT column_name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='jr_payments' AND column_name=ANY($1::text[])",[['payment_intent_id','refund_id','refund_status','refund_amount_minor']])).rows;
+  const refundIndexes=(await db.query("SELECT indexdef FROM pg_indexes WHERE schemaname=current_schema() AND indexname=ANY($1::text[])",[['jr_payment_intent_unique','jr_refund_unique']])).rows;
   const readOnly=(await db.query("SELECT current_setting('transaction_read_only') AS value")).rows[0]?.value==='on';
   // Check the application's TLS socket: a managed proxy may terminate TLS before the PostgreSQL backend.
   const tls=db.connection?.stream?.encrypted===true;
   const certificateVerified=tls&&db.connection.stream.authorized===true;
   databaseStatus='CONNECTED';
-  return {connected:true,schema_ready:tables.length===expectedTables.length,booking_constraints_ready:indexes.length===2&&indexes.every(i=>i.indexdef.startsWith('CREATE UNIQUE INDEX')&&i.indexdef.includes(' WHERE ')&&i.indexdef.includes(i.indexname==='jr_one_active_parent_return'?'(parent_charter_id)':'(listing_id)')),read_only_transaction:readOnly,transport_encrypted:tls,certificate_verified:certificateVerified,transaction_write_probe:transactionProbe,checked_at};
+  return {connected:true,schema_ready:tables.length===expectedTables.length,booking_constraints_ready:indexes.length===2&&indexes.every(i=>i.indexdef.startsWith('CREATE UNIQUE INDEX')&&i.indexdef.includes(' WHERE ')&&i.indexdef.includes(i.indexname==='jr_one_active_parent_return'?'(parent_charter_id)':'(listing_id)')),refund_tracking_ready:refundColumns.length===4&&refundIndexes.length===2&&refundIndexes.every(i=>i.indexdef.startsWith('CREATE UNIQUE INDEX')),read_only_transaction:readOnly,transport_encrypted:tls,certificate_verified:certificateVerified,transaction_write_probe:transactionProbe,checked_at};
  })}catch{databaseStatus='UNAVAILABLE';return {connected:false,schema_ready:false,booking_constraints_ready:false,read_only_transaction:false,checked_at}}
 }
 

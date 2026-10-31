@@ -46,7 +46,7 @@ The first administrator uses First administrator setup on the Admin page. Retrie
 
 Review operator applications against actual licensing records and contractual authority. Review aircraft registration, insurance and authority to offer the aircraft. Record evidence in the review notes. Approve the parent-linked empty-leg proposal only after checking its schedule and price. Review actions create audit entries.
 
-The dashboard shows bookings and the audit history. Full refunds require a recorded paid booking and configured Stripe credentials. A refund request is not marked complete until Stripe reports success. Partial refunds, disputes, chargebacks, operator payouts and automated reconciliation need further implementation or an external operations process.
+The dashboard shows bookings and the audit history. Full refunds require a recorded paid booking and configured Stripe credentials. A refund request is not marked complete until Stripe reports success. Full-refund callbacks now track pending, succeeded, failed and action-required states; administrators can refresh provider status. Partial or multiple refunds are flagged for review. Partial-refund accounting, disputes, chargebacks, operator payouts and broader reconciliation still require implementation or an external operations process. See [refund operations](REFUND_OPERATIONS.md).
 
 ## Owner activation
 
@@ -56,7 +56,7 @@ The Render web service is aeroshare-global in the Singapore region. The active d
 2. Open the aeroshare-global web service, then Environment. Set DATABASE_URL to that value and save with a new deployment. Do not put it in GitHub, screenshots or chat.
 3. Check /api/v1/status. The database must report connected true. A startup migration creates the platform tables automatically. If it reports unavailable, inspect runtime logs and verify the Neon destination, TLS configuration and credentials.
 4. Set RESEND_API_KEY and EMAIL_FROM using an authenticated email provider account and verified sender domain. Test verification and password-reset delivery with accounts you control.
-5. Set STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET using test credentials first. Configure the webhook destination as https://aeroshare-global.onrender.com/api/v1/payments/webhook for checkout.session.completed and checkout.session.async_payment_succeeded. Run real provider sandbox payments and refund tests before using live keys.
+5. Set STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET using test credentials first. Configure the webhook destination as https://aeroshare-global.onrender.com/api/v1/payments/webhook for checkout.session.completed, checkout.session.async_payment_succeeded, refund.created, refund.updated and refund.failed. Run real provider sandbox payments and refund tests before using live keys.
 6. Preserve DOCUMENT_ENCRYPTION_KEY securely. Losing or changing it makes existing encrypted attachments unreadable. Keep a protected copy under your organisation’s secret-recovery process.
 7. Set up the first administrator, then remove ADMIN_BOOTSTRAP_TOKEN. There is no public administrator signup.
 8. The active Neon Free database has no fixed trial expiry, but storage/compute quotas and scale-to-zero apply. A post-migration snapshot exists. Arrange ongoing backups and prove a restore works before commercial use. The free Render web service can sleep when idle.

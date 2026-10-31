@@ -76,3 +76,5 @@ OurAirports and Natural Earth references are public domain. Aircraft observation
 ## Global product review and flight discovery
 
 Read the [31 October product research and gap audit](docs/PRODUCT_RESEARCH_2026-10-31.md) and [first paid booking checklist](docs/FIRST_PAID_BOOKING_CHECKLIST.md). Empty-leg discovery now supports passenger capacity, exact or flexible UTC dates, listing currency, earliest departure and price ordering within one currency, plus shareable search links. These features do not activate merchant collection or create real inventory.
+
+Full-refund lifecycle tracking now includes signed callbacks, provider status refresh, duplicate-request protection and client dashboard progress. See [refund operations and acceptance limits](docs/REFUND_OPERATIONS.md). Merchant credentials and real sandbox acceptance remain pending; no live collection has been enabled.

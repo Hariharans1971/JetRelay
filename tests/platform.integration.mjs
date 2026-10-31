@@ -54,9 +54,49 @@ try{
  await call('documents',{booking_id:held.id,filename:'note.pdf',mime:'application/pdf',content_base64:Buffer.from('%PDF-1.4 local test').toString('base64')},one,403);
  const paymentId=randomUUID();await db.query('INSERT INTO jr_payments(id,booking_id,session_id,amount_minor,currency) VALUES($1,$2,$3,$4,$5)',[paymentId,held.id,'cs_test_local',held.price_minor,held.currency]);
  const event={id:'evt_local_test',type:'checkout.session.completed',data:{object:{id:'cs_test_local',payment_status:'paid',amount_total:Number(held.price_minor),currency:'inr',metadata:{booking_id:held.id}}}};const stripe=new Stripe(process.env.STRIPE_SECRET_KEY);
- async function webhook(e,valid=true){const payload=JSON.stringify(e),signature=valid?stripe.webhooks.generateTestHeaderString({payload,secret:process.env.STRIPE_WEBHOOK_SECRET}):'invalid';const r=await fetch(base+'/api/v1/payments/webhook',{method:'POST',headers:{'Content-Type':'application/json','stripe-signature':signature},body:payload});assert.equal(r.status,valid?200:400,await r.text());checks++}
+ async function webhook(e,valid=true,expected=valid?200:400){const payload=JSON.stringify(e),signature=valid?stripe.webhooks.generateTestHeaderString({payload,secret:process.env.STRIPE_WEBHOOK_SECRET}):'invalid';const r=await fetch(base+'/api/v1/payments/webhook',{method:'POST',headers:{'Content-Type':'application/json','stripe-signature':signature},body:payload});assert.equal(r.status,expected,await r.text());checks++}
  await webhook(event,false);await webhook(event);await webhook(event);await webhook({...event,id:'evt_second_paid_event',type:'checkout.session.async_payment_succeeded'});assert.equal((await db.query('SELECT status FROM jr_bookings WHERE id=$1',[held.id])).rows[0].status,'confirmed');
  const {d:doc}=await call('documents',{booking_id:held.id,filename:'note.pdf',mime:'application/pdf',content_base64:Buffer.from('%PDF-1.4 local test').toString('base64')},one,201);await call('documents/'+doc.id,null,two,404);const file=await fetch(base+'/api/v1/documents/'+doc.id,{headers:{Cookie:one.cookie}});assert.equal(await file.text(),'%PDF-1.4 local test');checks++;
  await call('operator/cancel-charter',{id:c.id},op);assert.equal((await db.query('SELECT status FROM jr_bookings WHERE id=$1',[held.id])).rows[0].status,'refund_pending');assert.equal((await call('listings')).d.total,0);
+ // Provider-backed refund lifecycle using an explicit test-only SDK substitute.
+ const preserved=(await db.query('SELECT booking_id,amount_minor,currency FROM jr_payments WHERE id=$1',[paymentId])).rows[0];
+ await pg.exec('ALTER TABLE jr_payments DROP COLUMN payment_intent_id; ALTER TABLE jr_payments DROP COLUMN refund_id; ALTER TABLE jr_payments DROP COLUMN refund_status; ALTER TABLE jr_payments DROP COLUMN refund_amount_minor;');
+ assert.equal((await db.databaseReadiness()).refund_tracking_ready,false);
+ await pg.exec(await readFile(new URL('../render/platform/schema.sql',import.meta.url),'utf8'));
+ await pg.exec(await readFile(new URL('../render/platform/schema.sql',import.meta.url),'utf8'));
+ assert.deepEqual((await db.query('SELECT booking_id,amount_minor,currency FROM jr_payments WHERE id=$1',[paymentId])).rows[0],preserved);
+ assert.equal((await db.databaseReadiness()).refund_tracking_ready,true);checks+=3;
+ const {useTestPaymentClient}=await import('../render/platform/api.mjs');let createCalls=0;
+ let currentRefund={id:'re_local_full',payment_intent:'pi_local_paid',amount:Number(held.price_minor),currency:'inr',status:'pending',metadata:{booking_id:held.id}};
+ useTestPaymentClient({webhooks:stripe.webhooks,checkout:{sessions:{retrieve:async()=>({payment_intent:'pi_local_paid',payment_status:'paid',amount_total:Number(held.price_minor),currency:'inr',metadata:{booking_id:held.id}})}},refunds:{create:async(data,options)=>{createCalls++;assert.equal(data.amount,Number(held.price_minor));assert.equal(options.idempotencyKey,'refund-payment-'+paymentId);return structuredClone(currentRefund)},retrieve:async id=>{assert.equal(id,currentRefund.id);return structuredClone(currentRefund)}}});
+ await call('admin/refund',{booking_id:held.id},one,403);
+ assert.equal((await call('admin/refund',{booking_id:held.id},admin,202)).d.status,'pending');
+ assert.equal((await db.query('SELECT status FROM jr_bookings WHERE id=$1',[held.id])).rows[0].status,'refund_pending');
+ assert.equal((await call('dashboard',null,one)).d.bookings[0].payments[0].refund_status,'pending');
+ await call('admin/refund-status',{booking_id:held.id},one,403);
+ await call('admin/refund',{booking_id:held.id},admin,202);assert.equal(createCalls,1);
+ const refundEvent={id:'evt_refund_success',type:'refund.updated',data:{object:{...currentRefund,status:'pending'}}};
+ currentRefund.status='succeeded';await webhook(refundEvent);await webhook(refundEvent);
+ assert.equal((await db.query('SELECT status FROM jr_bookings WHERE id=$1',[held.id])).rows[0].status,'refunded');
+ assert.equal((await call('admin/refund-status',{booking_id:held.id},admin)).d.status,'succeeded');
+ await webhook({...refundEvent,id:'evt_refund_old_pending',type:'refund.created'});
+ assert.equal((await db.query('SELECT status FROM jr_bookings WHERE id=$1',[held.id])).rows[0].status,'refunded');
+ currentRefund.status='failed';await webhook({...refundEvent,id:'evt_refund_failed',type:'refund.failed'});
+ assert.equal((await db.query('SELECT status FROM jr_bookings WHERE id=$1',[held.id])).rows[0].status,'refund_pending');
+ assert.equal((await call('admin/refund-status',{booking_id:held.id},admin,202)).d.status,'failed');assert.equal(createCalls,1);
+ currentRefund.currency='usd';await webhook({...refundEvent,id:'evt_refund_mismatch'},true,503);
+ assert.equal((await db.query("SELECT count(*) AS count FROM jr_payment_events WHERE event_id='evt_refund_mismatch'")).rows[0].count,0);
+ currentRefund.currency='inr';currentRefund.status='succeeded';await webhook({...refundEvent,id:'evt_refund_mismatch'});
+ assert.equal((await db.query('SELECT status FROM jr_bookings WHERE id=$1',[held.id])).rows[0].status,'refunded');
+ const {reconcileRefund}=await import('../render/platform/refunds.mjs');
+ assert.equal((await db.transaction(tx=>reconcileRefund(tx,{...currentRefund,status:'pending'}))).status,'succeeded');
+ assert.equal((await db.query('SELECT status FROM jr_bookings WHERE id=$1',[held.id])).rows[0].status,'refunded');
+ await assert.rejects(db.transaction(tx=>reconcileRefund(tx,{...currentRefund,amount:currentRefund.amount+1})),/does not match/);
+ await assert.rejects(db.transaction(tx=>reconcileRefund(tx,{...currentRefund,metadata:{booking_id:randomUUID()}})),/does not match/);
+ assert.equal((await db.transaction(tx=>reconcileRefund(tx,{...currentRefund,amount:currentRefund.amount-100}))).status,'partial_refund_review');
+ assert.equal((await db.query('SELECT status FROM jr_bookings WHERE id=$1',[held.id])).rows[0].status,'refund_pending');
+ assert.equal((await db.transaction(tx=>reconcileRefund(tx,{...currentRefund,id:'re_second_external'}))).status,'multiple_refunds_review');
+ assert.equal((await db.transaction(tx=>reconcileRefund(tx,currentRefund))).completed,false);checks+=8;
+ useTestPaymentClient(null);
  await call('auth/logout',{},one);assert.equal((await call('session',null,one)).d.user,null);console.log(JSON.stringify({integration_checks:checks,engine:'PostgreSQL WASM PGlite',result:'PASS',managed_database_connection:'NOT_TESTED',stripe:'SIGNED_LOCAL_WEBHOOK_CONTRACT_ONLY'}));
 }finally{await new Promise(r=>server.close(r));await db.shutdown()}
