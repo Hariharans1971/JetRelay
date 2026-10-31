@@ -19,9 +19,11 @@ async function inspectDatabaseReadiness(){
   const tables=(await db.query("SELECT table_name FROM information_schema.tables WHERE table_schema=current_schema() AND table_name=ANY($1::text[])",[expectedTables])).rows;
   const indexes=(await db.query("SELECT indexname,indexdef FROM pg_indexes WHERE schemaname=current_schema() AND indexname=ANY($1::text[])",[['jr_one_active_parent_return','jr_one_whole_aircraft_booking']])).rows;
   const readOnly=(await db.query("SELECT current_setting('transaction_read_only') AS value")).rows[0]?.value==='on';
-  const tls=(await db.query('SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()')).rows[0]?.ssl===true;
+  // Check the application's TLS socket: a managed proxy may terminate TLS before the PostgreSQL backend.
+  const tls=db.connection?.stream?.encrypted===true;
+  const certificateVerified=tls&&db.connection.stream.authorized===true;
   databaseStatus='CONNECTED';
-  return {connected:true,schema_ready:tables.length===expectedTables.length,booking_constraints_ready:indexes.length===2&&indexes.every(i=>i.indexdef.startsWith('CREATE UNIQUE INDEX')&&i.indexdef.includes(' WHERE ')&&i.indexdef.includes(i.indexname==='jr_one_active_parent_return'?'(parent_charter_id)':'(listing_id)')),read_only_transaction:readOnly,transport_encrypted:tls,transaction_write_probe:transactionProbe,checked_at};
+  return {connected:true,schema_ready:tables.length===expectedTables.length,booking_constraints_ready:indexes.length===2&&indexes.every(i=>i.indexdef.startsWith('CREATE UNIQUE INDEX')&&i.indexdef.includes(' WHERE ')&&i.indexdef.includes(i.indexname==='jr_one_active_parent_return'?'(parent_charter_id)':'(listing_id)')),read_only_transaction:readOnly,transport_encrypted:tls,certificate_verified:certificateVerified,transaction_write_probe:transactionProbe,checked_at};
  })}catch{databaseStatus='UNAVAILABLE';return {connected:false,schema_ready:false,booking_constraints_ready:false,read_only_transaction:false,checked_at}}
 }
 
