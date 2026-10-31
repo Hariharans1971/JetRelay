@@ -1,7 +1,15 @@
 import pg from 'pg';
 import {readFile} from 'node:fs/promises';
 let transactionProbe=false;let pool=null;export let databaseStatus='NOT_CONFIGURED';
-export async function initializeDatabase(){if(!process.env.DATABASE_URL)return false;pool=new pg.Pool({connectionString:process.env.DATABASE_URL,max:5,connectionTimeoutMillis:5000,idleTimeoutMillis:30000,statement_timeout:10000});pool.on('error',()=>{databaseStatus='UNAVAILABLE';console.error('Database pool connection error')});try{await transaction(async db=>{await db.query('SELECT pg_advisory_xact_lock(73489123)');await db.query(await readFile(new URL('./schema.sql',import.meta.url),'utf8'))});transactionProbe=await verifyDatabaseTransactions();databaseStatus='CONNECTED';return true}catch{databaseStatus='UNAVAILABLE';console.error('Database initialization failed');return false}}
+// Optional non-secret routing override: the existing password stays inside the app host.
+export function databaseConnectionString(env=process.env){
+ if(!env.DATABASE_HOST)return env.DATABASE_URL;
+ const url=new URL(env.DATABASE_URL),host=env.DATABASE_HOST;
+ if(!url.hostname.endsWith('.neon.tech')||!/^ep-[a-z0-9-]+(?:\.[a-z0-9-]+)*\.neon\.tech$/.test(host))throw Error('Invalid Neon database host override');
+ if(url.searchParams.get('sslmode')!=='verify-full')throw Error('Database host override requires verified TLS');
+ url.hostname=host;return url.href;
+}
+export async function initializeDatabase(){if(!process.env.DATABASE_URL)return false;pool=new pg.Pool({connectionString:databaseConnectionString(),max:5,connectionTimeoutMillis:5000,idleTimeoutMillis:30000,statement_timeout:10000});pool.on('error',()=>{databaseStatus='UNAVAILABLE';console.error('Database pool connection error')});try{await transaction(async db=>{await db.query('SELECT pg_advisory_xact_lock(73489123)');await db.query(await readFile(new URL('./schema.sql',import.meta.url),'utf8'))});transactionProbe=await verifyDatabaseTransactions();databaseStatus='CONNECTED';return true}catch{databaseStatus='UNAVAILABLE';console.error('Database initialization failed');return false}}
 export async function query(sql,values=[]){if(!pool)throw Object.assign(new Error('Database connection is not configured'),{status:503});return pool.query(sql,values)}
 export async function transaction(fn){if(!pool)throw Object.assign(new Error('Database connection is not configured'),{status:503});const db=await pool.connect();try{await db.query('BEGIN');const result=await fn(db);await db.query('COMMIT');return result}catch(e){await db.query('ROLLBACK');throw e}finally{db.release()}}
 export async function ping(){if(!pool)return false;try{await query('SELECT 1');databaseStatus='CONNECTED';return true}catch{databaseStatus='UNAVAILABLE';return false}}
