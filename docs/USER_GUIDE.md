@@ -50,16 +50,16 @@ The dashboard shows bookings and the audit history. Full refunds require a recor
 
 ## Owner activation
 
-The Render web service is aeroshare-global in the Singapore region. The separate database is jetrelay-pilot, also in Singapore. The application is connected to the database. Live checks confirmed all 13 tables, booking protection indexes and temporary-table write and rollback tests. Use /status.html to check current availability. The following connection steps are for setup or recovery.
+The Render web service is aeroshare-global in the Singapore region. The active database is the separate jetrelay database on Neon in AWS North Virginia. The old Render jetrelay-pilot database is retained as a migration fallback and is no longer active. The application is connected to the database. Live checks confirmed all 13 tables, booking protection indexes and temporary-table write and rollback tests. Use /status.html to check current availability. The following connection steps are for setup or recovery.
 
-1. In Render, open the jetrelay-pilot database and copy its Internal Database URL.
+1. In Neon, open the JetRelay database and obtain its direct PostgreSQL connection string using verified TLS. Keep the connection string private.
 2. Open the aeroshare-global web service, then Environment. Set DATABASE_URL to that value and save with a new deployment. Do not put it in GitHub, screenshots or chat.
-3. Check /api/v1/status. The database must report connected true. A startup migration creates the platform tables automatically. If it reports unavailable, inspect runtime logs and verify the same workspace and region.
+3. Check /api/v1/status. The database must report connected true. A startup migration creates the platform tables automatically. If it reports unavailable, inspect runtime logs and verify the Neon destination, TLS configuration and credentials.
 4. Set RESEND_API_KEY and EMAIL_FROM using an authenticated email provider account and verified sender domain. Test verification and password-reset delivery with accounts you control.
 5. Set STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET using test credentials first. Configure the webhook destination as https://aeroshare-global.onrender.com/api/v1/payments/webhook for checkout.session.completed and checkout.session.async_payment_succeeded. Run real provider sandbox payments and refund tests before using live keys.
 6. Preserve DOCUMENT_ENCRYPTION_KEY securely. Losing or changing it makes existing encrypted attachments unreadable. Keep a protected copy under your organisation’s secret-recovery process.
 7. Set up the first administrator, then remove ADMIN_BOOTSTRAP_TOKEN. There is no public administrator signup.
-8. Move the pilot database to an appropriate paid plan before collecting real customer data. The current free database expires on 30 November 2026 at approximately 01:32 IST. Configure backups and prove a restore works. The free web service can sleep when idle.
+8. The active Neon Free database has no fixed trial expiry, but storage/compute quotas and scale-to-zero apply. A post-migration snapshot exists. Arrange ongoing backups and prove a restore works before commercial use. The free Render web service can sleep when idle.
 9. Complete legal terms, privacy, refunds, support, operator agreements, jurisdiction and merchant approval. The built-in Terms page is a product notice, not a substitute for reviewed commercial contracts.
 10. Enable live collection only after those checks. COMMERCIAL_LAUNCH_APPROVED remains false until the owner has completed the launch review.
 

@@ -8,7 +8,7 @@ A whole-aircraft empty-leg marketplace, evolved from the AeroShare aviation work
 
 This release adds an independent Node.js and PostgreSQL booking platform to the existing aviation-reference app. It does not rely on an unseen FastAPI implementation. The original Next.js/FastAPI commercial repository was not supplied, and no claim of feature parity with it is made.
 
-The public website is on Render in Singapore and its managed PostgreSQL connection has been verified live. The status endpoint also checks all 13 application tables, the two unique partial booking indexes and a read-only transaction. Startup also tests temporary-table writes, uniqueness and savepoint rollback without changing customer records. These infrastructure diagnostics are separate from the isolated marketplace test suite and do not certify commercial readiness.
+The public website is on Render in Singapore. Its active database is now the separate jetrelay database in Neon Lakebase Postgres, in AWS North Virginia. The connection uses verified TLS and server-side credentials. The status endpoint also checks all 13 application tables, the two unique partial booking indexes and a read-only transaction. Startup also tests temporary-table writes, uniqueness and savepoint rollback without changing customer records. These infrastructure diagnostics are separate from the isolated marketplace test suite and do not certify commercial readiness.
 
 Check [live service availability](https://aeroshare-global.onrender.com/status.html) for current account, data and activation status.
 
@@ -35,11 +35,11 @@ node --test tests/*.test.mjs
 node dist-node/server.mjs
 ```
 
-Set DATABASE_URL to a PostgreSQL connection string to enable account services. Migrations run at startup under a database advisory lock. Use the internal Render URL in the same region and workspace. Never commit credentials. The production server binds to 0.0.0.0:$PORT on Node.js 24.
+Set DATABASE_URL to a PostgreSQL connection string to enable account services. Migrations run at startup under a database advisory lock. For this deployment, use the direct Neon connection with sslmode=verify-full. Startup migrations and temporary-table checks use this direct connection; the app pool is capped at five. Never commit credentials. The production server binds to 0.0.0.0:$PORT on Node.js 24.
 
 ## Verification
 
-38 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 53 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. Managed connectivity is checked independently by the live status diagnostic; the isolated suite is not a real Stripe sandbox transaction.
+39 automated Node tests and 4 Python reference-refresh tests pass. The separate local platform integration run passed 53 checks against the PostgreSQL WASM PGlite engine, including roles, approval, concurrent competing holds, signed local webhook contracts, encrypted document authorization and parent-cancellation effects. Managed connectivity is checked independently by the live status diagnostic; the isolated suite is not a real Stripe sandbox transaction.
 
 Run the explicit integration suite after installing @electric-sql/pglite in an isolated test environment:
 
@@ -49,7 +49,7 @@ NODE_ENV=test PGLITE_MODULE=/absolute/path/to/pglite/dist/index.js node tests/pl
 
 ## Research and operational evidence
 
-Read the [competitor and launch review](docs/COMPETITOR_AND_LAUNCH_REVIEW.md) and [dependency audit](docs/audits/dependencies-2026-10-31.json). The quality workflow runs regression, reference and isolated marketplace integration checks plus an advisory dependency audit on pushes and pull requests. Its initial GitHub execution must be verified separately.
+Read the [database migration record](docs/DATABASE_MIGRATION.md) and the [competitor and launch review](docs/COMPETITOR_AND_LAUNCH_REVIEW.md) and [dependency audit](docs/audits/dependencies-2026-10-31.json). The quality workflow runs regression, reference and isolated marketplace integration checks plus an advisory dependency audit on pushes and pull requests. Its initial GitHub execution must be verified separately.
 
 ## Activation and commercial launch
 
@@ -57,7 +57,7 @@ Read [the user guide](docs/USER_GUIDE.md) for the exact connection, merchant, em
 
 COMMERCIAL_LAUNCH_APPROVED must remain false until merchant onboarding, verified operator agreements, reviewed policies, production backups/restore, operational support and external security review are complete. A public deployment does not constitute aviation approval, a security certification, a payment licence or guaranteed global availability.
 
-The free pilot database expires on 29 November 2026 UTC. It must be upgraded and backed up before real customer use. Free web service sleep, provider rate limits and single-instance request limits make this a pilot rather than an enterprise availability commitment.
+The active Neon Free database has no fixed trial expiry under the current plan. It has shared-project storage/compute limits, scale-to-zero and no uptime SLA. The old Render pilot database is retained but is no longer the application database; its expiry does not govern the active Neon database. Free web service sleep, provider rate limits and single-instance request limits make this a pilot rather than an enterprise availability commitment.
 
 ## Source map
 
