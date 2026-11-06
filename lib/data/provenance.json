@@ -1,9 +1,9 @@
 {
-  "imported_at": "2026-11-05T05:13:30.842985+00:00",
-  "airports": 86337,
+  "imported_at": "2026-11-06T05:13:11.902304+00:00",
+  "airports": 86343,
   "countries": 247,
-  "runway_airports": 41270,
-  "runways": 48405,
+  "runway_airports": 41276,
+  "runways": 48411,
   "invalid_coordinates_skipped": 0,
   "airport_source": "https://ourairports.com/data/",
   "airport_licence": "Public Domain",
@@ -11,12 +11,12 @@
   "geography_licence": "Public Domain",
   "files": {
     "airports.csv": {
-      "sha256": "55bd82106c8ac1c9559cf5879ae9b69eb9c6e748df01514632dd5fbbb9e8b474",
-      "bytes": 12756853
+      "sha256": "e2e65a3ddaf76170c0e2c373cb8b68597bdf3b59d243c4d6db454d48498ba6d7",
+      "bytes": 12757683
     },
     "runways.csv": {
-      "sha256": "d94a2e562069ce30e0290649164bf608c437696ccf1fad988c5cba7d25fb0c30",
-      "bytes": 3973619
+      "sha256": "b0bac6ad2a802eba770d57b3e42c191c888f3d334e42780f3d12ff5930650d07",
+      "bytes": 3973977
     },
     "countries.csv": {
       "sha256": "2a9dbee691125b0cdb8ceb5fe227c48c903f99c488963b8e53e2ab366521c639",
